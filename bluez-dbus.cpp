@@ -934,10 +934,9 @@ void bluez_find_adapters(DBusConnection* dbus_conn, std::vector<std::string> &ad
                         dbus_message_iter_recurse(&root_iter, &array_iter);
                         do
                         {
-                            if (DBUS_TYPE_DICT_ENTRY == dbus_message_iter_get_arg_type(&array_iter))
-                            {
-                                DBusMessageIter dict_iter;
-                                dbus_message_iter_recurse(&array_iter, &dict_iter);
+                            DBusMessageIter dict_iter;
+                            dbus_message_iter_recurse(&array_iter, &dict_iter);
+                            do {
                                 if (DBUS_TYPE_OBJECT_PATH == dbus_message_iter_get_arg_type(&dict_iter))
                                 {
                                     DBusBasicValue value;
@@ -945,29 +944,19 @@ void bluez_find_adapters(DBusConnection* dbus_conn, std::vector<std::string> &ad
                                     std::string object_path(value.str);
                                     std::cout << std::right << std::setw(24) << "Object Path: " << object_path << std::endl;
                                 }
-                                //std::string dict_entry_filter("");
-                                //int indent(20);
-                                //HandleDict(&array_iter, dict_entry_filter, indent);
-                            }
-                            else if (DBUS_TYPE_OBJECT_PATH == dbus_message_iter_get_arg_type(&array_iter))
-                            {
-                                DBusBasicValue value;
-                                dbus_message_iter_get_basic(&root_iter, &value);
-                                std::string object_path(value.str);
-                                std::cout << std::right << std::setw(24) << "Object Path: " << object_path << std::endl;
-                            }
-                            else if (DBUS_TYPE_ARRAY == dbus_message_iter_get_arg_type(&array_iter))
-                            {
-                                std::string dict_entry_filter("");
-                                int indent(20);
-                                HandleArray(&array_iter, dict_entry_filter, indent);
-                            }
-                            else
-                            {
-                                std::string type_str;
-                                TypeToString(&array_iter, type_str);
-                                std::cout << std::right << std::setw(20) << "Unexpected type in message: " << type_str << std::endl;
-                            }
+                                else if (DBUS_TYPE_ARRAY == dbus_message_iter_get_arg_type(&dict_iter))
+                                {
+                                    std::string dict_entry_filter("");
+                                    int indent(20);
+                                    HandleArray(&dict_iter, dict_entry_filter, indent);
+                                }
+                                else
+                                {
+                                    std::string type_str;
+                                    TypeToString(&dict_iter, type_str);
+                                    std::cout << std::right << std::setw(20) << "Unexpected type in message: " << type_str << std::endl;
+                                }
+                            } while (dbus_message_iter_next(&dict_iter));
                         } while (dbus_message_iter_next(&array_iter));
                     } while (dbus_message_iter_next(&root_iter));
                 }
