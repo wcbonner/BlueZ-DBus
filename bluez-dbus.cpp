@@ -916,53 +916,61 @@ void bluez_find_adapters(DBusConnection* dbus_conn, std::vector<std::string> &ad
             if (dbus_message_get_type(dbus_reply) == DBUS_MESSAGE_TYPE_METHOD_RETURN)
             {
                 std::cout << std::right << std::setw(20) << "Message Type: " << std::string(dbus_message_type_to_string(dbus_message_get_type(dbus_reply))) << std::endl; // https://dbus.freedesktop.org/doc/api/html/group__DBusMessage.html#gaed63e4c2baaa50d782e8ebb7643def19
-                std::cout << std::right << std::setw(20) << "Signature: " << std::string(dbus_message_get_signature(dbus_reply)) << std::endl; // https://dbus.freedesktop.org/doc/api/html/group__DBusMessage.html#gaed63e4c2baaa50d782e8ebb7643def19
-                // Signature: a{oa{sa{sv}}}
+                const std::string dbus_reply_Signature(dbus_message_get_signature(dbus_reply));
+                std::cout << std::right << std::setw(20) << "Signature: " << dbus_reply_Signature << std::endl;
                 std::cout << std::right << std::setw(20) << "Destination: " << std::string(dbus_message_get_destination(dbus_reply)) << std::endl; // https://dbus.freedesktop.org/doc/api/html/group__DBusMessage.html#gaed63e4c2baaa50d782e8ebb7643def19
                 std::cout << std::right << std::setw(20) << "Sender: " << std::string(dbus_message_get_sender(dbus_reply)) << std::endl; // https://dbus.freedesktop.org/doc/api/html/group__DBusMessage.html#gaed63e4c2baaa50d782e8ebb7643def19
                 if (NULL != dbus_message_get_path(dbus_reply)) std::cout << std::right << std::setw(20) << "Path: " << std::string(dbus_message_get_path(dbus_reply)) << std::endl; // https://dbus.freedesktop.org/doc/api/html/group__DBusMessage.html#ga18adf731bb42d324fe2624407319e4af
                 if (NULL != dbus_message_get_interface(dbus_reply)) std::cout << std::right << std::setw(20) << "Interface: " << std::string(dbus_message_get_interface(dbus_reply)) << std::endl; // https://dbus.freedesktop.org/doc/api/html/group__DBusMessage.html#ga1ad192bd4538cae556121a71b4e09d42
                 if (NULL != dbus_message_get_member(dbus_reply)) std::cout << std::right << std::setw(20) << "Member: " << std::string(dbus_message_get_member(dbus_reply)) << std::endl; // https://dbus.freedesktop.org/doc/api/html/group__DBusMessage.html#gaf5c6b705c53db07a5ae2c6b76f230cf9
                 if (NULL != dbus_message_get_container_instance(dbus_reply)) std::cout << std::right << std::setw(20) << "Container Instance: " << std::string(dbus_message_get_container_instance(dbus_reply)) << std::endl; // https://dbus.freedesktop.org/doc/api/html/group__DBusMessage.html#gaed63e4c2baaa50d782e8ebb7643def19
-            
-                DBusMessageIter root_iter;
-                dbus_message_iter_init(dbus_reply, &root_iter);
-                do
+                if (!dbus_reply_Signature.compare("a{oa{sa{sv}}}"))
                 {
-                    DBusMessageIter array_iter;
-                    dbus_message_iter_recurse(&root_iter, &array_iter);
+                    DBusMessageIter root_iter;
+                    dbus_message_iter_init(dbus_reply, &root_iter);
                     do
                     {
-
-                        DBusBasicValue value;
-                        std::string object_path;
-                        int type = dbus_message_iter_get_arg_type(&array_iter);
-                        if (type == DBUS_TYPE_DICT_ENTRY)
+                        DBusMessageIter array_iter;
+                        dbus_message_iter_recurse(&root_iter, &array_iter);
+                        do
                         {
-                            std::string dict_entry_filter("");
-                            int indent(20);
-                            HandleDict(&array_iter, dict_entry_filter, indent);
-                        }
-                        else if (type == DBUS_TYPE_OBJECT_PATH)
-                        {
-                            dbus_message_iter_get_basic(&root_iter, &value);
-                            object_path = std::string(value.str);
-                            std::cout << std::right << std::setw(24) << "Object Path: " << object_path << std::endl;
-                        }
-                        else if (type == DBUS_TYPE_ARRAY)
-                        {
-                            std::string dict_entry_filter("");
-                            int indent(20);
-                            HandleArray(&array_iter, dict_entry_filter, indent);
-                        }
-                        else
-                        {
-                            std::string type_str;
-                            int type = TypeToString(&array_iter, type_str);
-                            std::cout << std::right << std::setw(20) << "Unexpected type in message: " << type_str << std::endl;
-                        }
-                    } while (dbus_message_iter_next(&array_iter));
-                } while (dbus_message_iter_next(&root_iter));
+                            if (DBUS_TYPE_DICT_ENTRY == dbus_message_iter_get_arg_type(&array_iter))
+                            {
+                                DBusMessageIter dict_iter;
+                                dbus_message_iter_recurse(&array_iter, &dict_iter);
+                                if (DBUS_TYPE_OBJECT_PATH == dbus_message_iter_get_arg_type(&dict_iter))
+                                {
+                                    DBusBasicValue value;
+                                    dbus_message_iter_get_basic(&dict_iter, &value);
+                                    std::string object_path(value.str);
+                                    std::cout << std::right << std::setw(24) << "Object Path: " << object_path << std::endl;
+                                }
+                                //std::string dict_entry_filter("");
+                                //int indent(20);
+                                //HandleDict(&array_iter, dict_entry_filter, indent);
+                            }
+                            else if (DBUS_TYPE_OBJECT_PATH == dbus_message_iter_get_arg_type(&array_iter))
+                            {
+                                DBusBasicValue value;
+                                dbus_message_iter_get_basic(&root_iter, &value);
+                                std::string object_path(value.str);
+                                std::cout << std::right << std::setw(24) << "Object Path: " << object_path << std::endl;
+                            }
+                            else if (DBUS_TYPE_ARRAY == dbus_message_iter_get_arg_type(&array_iter))
+                            {
+                                std::string dict_entry_filter("");
+                                int indent(20);
+                                HandleArray(&array_iter, dict_entry_filter, indent);
+                            }
+                            else
+                            {
+                                std::string type_str;
+                                TypeToString(&array_iter, type_str);
+                                std::cout << std::right << std::setw(20) << "Unexpected type in message: " << type_str << std::endl;
+                            }
+                        } while (dbus_message_iter_next(&array_iter));
+                    } while (dbus_message_iter_next(&root_iter));
+                }
             }
             dbus_message_unref(dbus_reply);
         }
