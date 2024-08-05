@@ -946,9 +946,23 @@ void bluez_find_adapters(DBusConnection* dbus_conn, std::vector<std::string> &ad
                                 }
                                 else if (DBUS_TYPE_ARRAY == dbus_message_iter_get_arg_type(&dict1_iter))
                                 {
-                                    std::string dict_entry_filter("");
-                                    int indent(20);
-                                    //HandleArray(&dict_iter, dict_entry_filter, indent);
+                                    DBusMessageIter array2_iter;
+                                    dbus_message_iter_recurse(&dict1_iter, &array2_iter);
+                                    do
+                                    {
+                                        DBusMessageIter dict2_iter;
+                                        dbus_message_iter_recurse(&array2_iter, &dict2_iter);
+                                        do
+                                        {
+                                            if (DBUS_TYPE_STRING == dbus_message_iter_get_arg_type(&dict2_iter))
+                                            {
+                                                DBusBasicValue value;
+                                                dbus_message_iter_get_basic(&dict2_iter, &value);
+                                                std::string val(value.str);
+                                                std::cout << std::right << std::setw(24) << "String: " << val << std::endl;
+                                            }
+                                        } while (dbus_message_iter_next(&dict2_iter));
+                                    } while (dbus_message_iter_next(&array2_iter));
                                 }
                                 else
                                 {
