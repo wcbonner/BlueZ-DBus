@@ -930,12 +930,12 @@ void bluez_find_adapters(DBusConnection* dbus_conn, std::vector<std::string> &ad
                     dbus_message_iter_init(dbus_reply, &root_iter);
                     do
                     {
-                        DBusMessageIter array_iter;
-                        dbus_message_iter_recurse(&root_iter, &array_iter);
+                        DBusMessageIter array1_iter;
+                        dbus_message_iter_recurse(&root_iter, &array1_iter);
                         do
                         {
                             DBusMessageIter dict_iter;
-                            dbus_message_iter_recurse(&array_iter, &dict_iter);
+                            dbus_message_iter_recurse(&array1_iter, &dict_iter);
                             do {
                                 if (DBUS_TYPE_OBJECT_PATH == dbus_message_iter_get_arg_type(&dict_iter))
                                 {
@@ -948,7 +948,7 @@ void bluez_find_adapters(DBusConnection* dbus_conn, std::vector<std::string> &ad
                                 {
                                     std::string dict_entry_filter("");
                                     int indent(20);
-                                    HandleArray(&dict_iter, dict_entry_filter, indent);
+                                    //HandleArray(&dict_iter, dict_entry_filter, indent);
                                 }
                                 else
                                 {
@@ -957,7 +957,7 @@ void bluez_find_adapters(DBusConnection* dbus_conn, std::vector<std::string> &ad
                                     std::cout << std::right << std::setw(20) << "Unexpected type in message: " << type_str << std::endl;
                                 }
                             } while (dbus_message_iter_next(&dict_iter));
-                        } while (dbus_message_iter_next(&array_iter));
+                        } while (dbus_message_iter_next(&array1_iter));
                     } while (dbus_message_iter_next(&root_iter));
                 }
             }
