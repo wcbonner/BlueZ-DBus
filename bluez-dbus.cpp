@@ -934,17 +934,17 @@ void bluez_find_adapters(DBusConnection* dbus_conn, std::vector<std::string> &ad
                         dbus_message_iter_recurse(&root_iter, &array1_iter);
                         do
                         {
-                            DBusMessageIter dict_iter;
-                            dbus_message_iter_recurse(&array1_iter, &dict_iter);
+                            DBusMessageIter dict1_iter;
+                            dbus_message_iter_recurse(&array1_iter, &dict1_iter);
                             do {
-                                if (DBUS_TYPE_OBJECT_PATH == dbus_message_iter_get_arg_type(&dict_iter))
+                                if (DBUS_TYPE_OBJECT_PATH == dbus_message_iter_get_arg_type(&dict1_iter))
                                 {
                                     DBusBasicValue value;
-                                    dbus_message_iter_get_basic(&dict_iter, &value);
+                                    dbus_message_iter_get_basic(&dict1_iter, &value);
                                     std::string object_path(value.str);
                                     std::cout << std::right << std::setw(24) << "Object Path: " << object_path << std::endl;
                                 }
-                                else if (DBUS_TYPE_ARRAY == dbus_message_iter_get_arg_type(&dict_iter))
+                                else if (DBUS_TYPE_ARRAY == dbus_message_iter_get_arg_type(&dict1_iter))
                                 {
                                     std::string dict_entry_filter("");
                                     int indent(20);
@@ -953,10 +953,10 @@ void bluez_find_adapters(DBusConnection* dbus_conn, std::vector<std::string> &ad
                                 else
                                 {
                                     std::string type_str;
-                                    TypeToString(&dict_iter, type_str);
+                                    TypeToString(&dict1_iter, type_str);
                                     std::cout << std::right << std::setw(20) << "Unexpected type in message: " << type_str << std::endl;
                                 }
-                            } while (dbus_message_iter_next(&dict_iter));
+                            } while (dbus_message_iter_next(&dict1_iter));
                         } while (dbus_message_iter_next(&array1_iter));
                     } while (dbus_message_iter_next(&root_iter));
                 }
