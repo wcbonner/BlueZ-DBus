@@ -1075,33 +1075,26 @@ int main(int argc, char* argv[])
                                 {
                                     int indent = 0;
                                     Log(indent, "Got message");
-                                    const std::string dbus_msg_Signature(dbus_message_get_signature(dbus_msg));
+                                    const std::string dbus_msg_Signature(dbus_message_get_signature(dbus_msg)); // https://dbus.freedesktop.org/doc/api/html/group__DBusMessage.html#gaed63e4c2baaa50d782e8ebb7643def19
+                                    const std::string dbus_msg_Type(dbus_message_type_to_string(dbus_message_get_type(dbus_msg)));
                                     indent = 2;
-                                    if (DBUS_MESSAGE_TYPE_INVALID == dbus_message_get_type(dbus_msg))
-                                        Log(indent, "Type: Invalid");
-                                    else if (DBUS_MESSAGE_TYPE_METHOD_CALL == dbus_message_get_type(dbus_msg))
-                                        Log(indent, "Type: MethodCall");
-                                    else if (DBUS_MESSAGE_TYPE_METHOD_RETURN == dbus_message_get_type(dbus_msg))
-                                        Log(indent, "Type: MethodReturn");
-                                    else if (DBUS_MESSAGE_TYPE_ERROR == dbus_message_get_type(dbus_msg))
-                                    {
-                                        Log(indent, "Type: Error");
+                                    Log(indent, "Type: " + dbus_msg_Type);
+                                    if (DBUS_MESSAGE_TYPE_ERROR == dbus_message_get_type(dbus_msg))
                                         Log(indent, "Error name: " + std::string(dbus_message_get_error_name(dbus_msg))); // https://dbus.freedesktop.org/doc/api/html/group__DBusMessage.html#ga4e98b2283707a8e0313fc7c6fe3b1b5f
-                                    }
                                     else if (DBUS_MESSAGE_TYPE_SIGNAL == dbus_message_get_type(dbus_msg))
                                     {
-                                        const std::string dbus_msg_Path(dbus_message_get_path(dbus_msg));
-                                        const std::string dbus_msg_member(dbus_message_get_member(dbus_msg));
+                                        const std::string dbus_msg_Path(dbus_message_get_path(dbus_msg)); // https://dbus.freedesktop.org/doc/api/html/group__DBusMessage.html#ga18adf731bb42d324fe2624407319e4af
+                                        const std::string dbus_msg_Member(dbus_message_get_member(dbus_msg)); // https://dbus.freedesktop.org/doc/api/html/group__DBusMessage.html#gaf5c6b705c53db07a5ae2c6b76f230cf9
+                                        const std::string dbus_msg_Interface(dbus_message_get_interface(dbus_msg)); // https://dbus.freedesktop.org/doc/api/html/group__DBusMessage.html#ga1ad192bd4538cae556121a71b4e09d42
                                         //if (!dbus_msg_Path.compare("/org/bluez/hci0/dev_E3_8E_C8_C1_98_9A"))
                                         //{
-                                        Log(indent, "Type: Signal");
-                                        Log(indent, "Path: " + dbus_msg_Path); // https://dbus.freedesktop.org/doc/api/html/group__DBusMessage.html#ga18adf731bb42d324fe2624407319e4af
-                                        Log(indent, "Interface: " + std::string(dbus_message_get_interface(dbus_msg))); // https://dbus.freedesktop.org/doc/api/html/group__DBusMessage.html#ga1ad192bd4538cae556121a71b4e09d42
-                                        Log(indent, "Member: " + dbus_msg_member); // https://dbus.freedesktop.org/doc/api/html/group__DBusMessage.html#gaf5c6b705c53db07a5ae2c6b76f230cf9
-                                        Log(indent, "Signature: " + dbus_msg_Signature); // https://dbus.freedesktop.org/doc/api/html/group__DBusMessage.html#gaed63e4c2baaa50d782e8ebb7643def19
+                                        Log(indent, "Path: " + dbus_msg_Path);
+                                        Log(indent, "Interface: " + dbus_msg_Interface);
+                                        Log(indent, "Member: " + dbus_msg_Member);
+                                        Log(indent, "Signature: " + dbus_msg_Signature); 
                                         indent += 2;
                                         // BLE advertisement messages arrive as InterfacesAdded messages
-                                        if (!dbus_msg_member.compare("InterfacesAdded"))
+                                        if (!dbus_msg_Member.compare("InterfacesAdded"))
                                         {
                                             // Type: Signal
                                             // Path: /
@@ -1128,7 +1121,7 @@ int main(int argc, char* argv[])
                                                 iter.value = "";
                                             }
                                         }
-                                        else if (!dbus_msg_member.compare("PropertiesChanged"))
+                                        else if (!dbus_msg_Member.compare("PropertiesChanged"))
                                         {
                                             if (!dbus_msg_Signature.compare("sa{sv}as"))
                                             {
@@ -1163,7 +1156,7 @@ int main(int argc, char* argv[])
                                             }
                                         }
                                         else
-                                            Log(indent, "Unhandled member: " + dbus_msg_member);
+                                            Log(indent, "Unhandled member: " + dbus_msg_Member);
                                     }
                                     // Free the message
                                     dbus_message_unref(dbus_msg);
