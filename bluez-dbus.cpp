@@ -989,6 +989,7 @@ void bluez_find_adapters(DBusConnection* dbus_conn, std::vector<std::string> &ad
         }
     }
 }
+
 int main(int argc, char* argv[])
 {
     // Initialize D-Bus error
@@ -1073,90 +1074,88 @@ int main(int argc, char* argv[])
                                 // If there is nothing to receive we get a NULL
                                 if (dbus_msg != nullptr)
                                 {
-                                    int indent = 0;
-                                    Log(indent, "Got message");
                                     const std::string dbus_msg_Signature(dbus_message_get_signature(dbus_msg)); // https://dbus.freedesktop.org/doc/api/html/group__DBusMessage.html#gaed63e4c2baaa50d782e8ebb7643def19
-                                    const std::string dbus_msg_Type(dbus_message_type_to_string(dbus_message_get_type(dbus_msg)));
-                                    indent = 2;
-                                    Log(indent, "Type: " + dbus_msg_Type);
+                                    const std::string dbus_msg_Type(dbus_message_type_to_string(dbus_message_get_type(dbus_msg))); // https://dbus.freedesktop.org/doc/api/html/group__DBusMessage.html#ga30c3cf672781da89cf9714e5ba761033
+                                    std::cout << "Got message:\tType: " << dbus_msg_Type << "\tSignature: \"" << dbus_msg_Signature << "\"" << std::endl;
                                     if (DBUS_MESSAGE_TYPE_ERROR == dbus_message_get_type(dbus_msg))
-                                        Log(indent, "Error name: " + std::string(dbus_message_get_error_name(dbus_msg))); // https://dbus.freedesktop.org/doc/api/html/group__DBusMessage.html#ga4e98b2283707a8e0313fc7c6fe3b1b5f
+                                        std::cout << "  Error name: " << std::string(dbus_message_get_error_name(dbus_msg)) << std::endl; // https://dbus.freedesktop.org/doc/api/html/group__DBusMessage.html#ga4e98b2283707a8e0313fc7c6fe3b1b5f
                                     else if (DBUS_MESSAGE_TYPE_SIGNAL == dbus_message_get_type(dbus_msg))
                                     {
+                                        int indent = 2;
                                         const std::string dbus_msg_Path(dbus_message_get_path(dbus_msg)); // https://dbus.freedesktop.org/doc/api/html/group__DBusMessage.html#ga18adf731bb42d324fe2624407319e4af
                                         const std::string dbus_msg_Member(dbus_message_get_member(dbus_msg)); // https://dbus.freedesktop.org/doc/api/html/group__DBusMessage.html#gaf5c6b705c53db07a5ae2c6b76f230cf9
                                         const std::string dbus_msg_Interface(dbus_message_get_interface(dbus_msg)); // https://dbus.freedesktop.org/doc/api/html/group__DBusMessage.html#ga1ad192bd4538cae556121a71b4e09d42
                                         //if (!dbus_msg_Path.compare("/org/bluez/hci0/dev_E3_8E_C8_C1_98_9A"))
-                                        //{
-                                        Log(indent, "Path: " + dbus_msg_Path);
-                                        Log(indent, "Interface: " + dbus_msg_Interface);
-                                        Log(indent, "Member: " + dbus_msg_Member);
-                                        Log(indent, "Signature: " + dbus_msg_Signature); 
-                                        indent += 2;
-                                        // BLE advertisement messages arrive as InterfacesAdded messages
-                                        if (!dbus_msg_Member.compare("InterfacesAdded"))
                                         {
-                                            // Type: Signal
-                                            // Path: /
-                                            // Interface: org.freedesktop.DBus.ObjectManager
-                                            // Member: InterfacesAdded
-                                            // Signature: oa{sa{sv}}
-                                            // o: DBUS_TYPE_OBJECT_PATH
-                                            // a: DBUS_TYPE_ARRAY
-                                            // {}: DBUS_DICT_ENTRY_BEGIN_CHAR + DBUS_DICT_ENTRY_END_CHAR
-                                            // s: DBUS_TYPE_STRING
-                                            // a: DBUS_TYPE_ARRAY
-                                            // {}: DBUS_DICT_ENTRY_BEGIN_CHAR + DBUS_DICT_ENTRY_END_CHAR
-                                            // s: DBUS_TYPE_STRING
-                                            // v: DBUS_TYPE_VARIANT
-                                            // Obj path value: /org/bluez/hci0/dev_F1_77_2B_1F_A3_FA
-
-                                            HandleSignalMessage(dbus_msg, "/org/bluez/hci0/dev_", "org.bluez.Device1", indent);
-
-                                            for (auto& iter : ble_properties)
+                                            Log(indent, "Path: " + dbus_msg_Path);
+                                            Log(indent, "Interface: " + dbus_msg_Interface);
+                                            Log(indent, "Member: " + dbus_msg_Member);
+                                            indent += 2;
+                                            // BLE advertisement messages arrive as InterfacesAdded messages
+                                            if (!dbus_msg_Member.compare("InterfacesAdded"))
                                             {
-                                                std::cout << __FILE__ << "(" << __LINE__ << "): " << iter.name << ": " << iter.value << std::endl;
+                                                // Type: Signal
+                                                // Path: /
+                                                // Interface: org.freedesktop.DBus.ObjectManager
+                                                // Member: InterfacesAdded
+                                                // Signature: oa{sa{sv}}
+                                                // o: DBUS_TYPE_OBJECT_PATH
+                                                // a: DBUS_TYPE_ARRAY
+                                                // {}: DBUS_DICT_ENTRY_BEGIN_CHAR + DBUS_DICT_ENTRY_END_CHAR
+                                                // s: DBUS_TYPE_STRING
+                                                // a: DBUS_TYPE_ARRAY
+                                                // {}: DBUS_DICT_ENTRY_BEGIN_CHAR + DBUS_DICT_ENTRY_END_CHAR
+                                                // s: DBUS_TYPE_STRING
+                                                // v: DBUS_TYPE_VARIANT
+                                                // Obj path value: /org/bluez/hci0/dev_F1_77_2B_1F_A3_FA
 
-                                                // Clear value for next run
-                                                iter.value = "";
+                                                HandleSignalMessage(dbus_msg, "/org/bluez/hci0/dev_", "org.bluez.Device1", indent);
+
+                                                for (auto& iter : ble_properties)
+                                                {
+                                                    std::cout << __FILE__ << "(" << __LINE__ << "): " << iter.name << ": " << iter.value << std::endl;
+
+                                                    // Clear value for next run
+                                                    iter.value = "";
+                                                }
                                             }
-                                        }
-                                        else if (!dbus_msg_Member.compare("PropertiesChanged"))
-                                        {
-                                            if (!dbus_msg_Signature.compare("sa{sv}as"))
+                                            else if (!dbus_msg_Member.compare("PropertiesChanged"))
                                             {
-                                                const std::string object_path_filter("/org/bluez/hci0/dev_");
-                                                const std::string dict_entry_filter("org.bluez.Device1");
-                                                DBusMessageIter root_iter;
-                                                dbus_message_iter_init(dbus_msg, &root_iter);
-                                                bool fail = false;
-                                                do {
-                                                    std::string type_str;
-                                                    int type = TypeToString(&root_iter, type_str);
+                                                if (!dbus_msg_Signature.compare("sa{sv}as"))
+                                                {
+                                                    const std::string object_path_filter("/org/bluez/hci0/dev_");
+                                                    const std::string dict_entry_filter("org.bluez.Device1");
+                                                    DBusMessageIter root_iter;
+                                                    dbus_message_iter_init(dbus_msg, &root_iter);
+                                                    bool fail = false;
+                                                    do {
+                                                        std::string type_str;
+                                                        int type = TypeToString(&root_iter, type_str);
 
-                                                    switch (type)
-                                                    {
-                                                    case DBUS_TYPE_STRING:
-                                                        //if (DBUS_TYPE_STRING == dbus_message_iter_get_arg_type(&dict2_iter))
-                                                    {
-                                                        DBusBasicValue value;
-                                                        dbus_message_iter_get_basic(&root_iter, &value);
-                                                        std::cout << std::right << std::setw(24) << "String: " << std::string(value.str) << std::endl;
-                                                    }
-                                                    break;
-                                                    case DBUS_TYPE_ARRAY: // Handle the 'a'
-                                                        HandleArray(&root_iter, dict_entry_filter, indent);
+                                                        switch (type)
+                                                        {
+                                                        case DBUS_TYPE_STRING:
+                                                            //if (DBUS_TYPE_STRING == dbus_message_iter_get_arg_type(&dict2_iter))
+                                                        {
+                                                            DBusBasicValue value;
+                                                            dbus_message_iter_get_basic(&root_iter, &value);
+                                                            std::cout << std::right << std::setw(24) << "String: " << std::string(value.str) << std::endl;
+                                                        }
                                                         break;
-                                                    default:
-                                                        Log(indent, "Unexpected type in message: " + type_str);
-                                                        fail = true;
-                                                        break;
-                                                    }
-                                                } while (!fail && dbus_message_iter_next(&root_iter));
+                                                        case DBUS_TYPE_ARRAY: // Handle the 'a'
+                                                            HandleArray(&root_iter, dict_entry_filter, indent);
+                                                            break;
+                                                        default:
+                                                            Log(indent, "Unexpected type in message: " + type_str);
+                                                            fail = true;
+                                                            break;
+                                                        }
+                                                    } while (!fail && dbus_message_iter_next(&root_iter));
+                                                }
                                             }
+                                            else
+                                                Log(indent, "Unhandled member: " + dbus_msg_Member);
                                         }
-                                        else
-                                            Log(indent, "Unhandled member: " + dbus_msg_Member);
                                     }
                                     // Free the message
                                     dbus_message_unref(dbus_msg);
