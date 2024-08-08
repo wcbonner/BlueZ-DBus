@@ -695,7 +695,7 @@ void HandleDict(DBusMessageIter* iter, const std::string& dict_entry_filter, int
         case DBUS_TYPE_STRING:
             dbus_message_iter_get_basic(&dict_iter, &value);
             val = std::string(value.str);
-            //Log(indent, "Dict entry: " + val);
+            Log(indent, "Dict entry: " + val);
             if (!StartsWith(val, dict_entry_filter)) {
                 Log(indent, "Skipping dict entry: " + val + " due to filter mismatch");
                 fail = true;
