@@ -11,6 +11,7 @@
 #include <iostream>
 #include <iterator>
 #include <map>
+#include <regex>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -18,7 +19,155 @@
 // Do this while running ble-dbus to see what else could be picked up from an advertisement message
 // gdbus introspect --system --dest org.bluez --object-path /org/bluez --recurse
 
-
+// I'm going to use this to create a map of the bluetooth addresses and names of the Govee Devices 
+/* BD Address */
+typedef struct {
+    uint8_t b[6];
+} __attribute__((packed)) bdaddr_t;
+std::map<bdaddr_t, std::string> GoveeBluetoothTitles;
+// The old method on adding the Govee devices is to recognize manufacturer data of a specific format and decode it
+// I've got to figure out how to find the same data in the data returned from DBus
+/*
+bool Govee_Temp::ReadMSG(const uint8_t * const data)
+{
+    bool rval = false;
+    const size_t data_len = data[0];
+    if (data[1] == 0xFF) // https://www.bluetooth.com/specifications/assigned-numbers/generic-access-profile/ «Manufacturer Specific Data»
+    {
+        if ((data_len == 9) && (data[2] == 0x88) && (data[3] == 0xEC)) // GVH5075_xxxx
+        {
+            if (Model == ThermometerType::Unknown)
+                Model = ThermometerType::H5075;
+            // This data came from https://github.com/Thrilleratplay/GoveeWatcher
+            // 88ec00 03519e 64 00 Temp: 21.7502°C Temp: 71.1504°F Humidity: 50.2%
+            // 2 3 4  5 6 7  8
+            int iTemp = int(data[5]) << 16 | int(data[6]) << 8 | int(data[7]);
+            bool bNegative = iTemp & 0x800000;	// check sign bit
+            iTemp = iTemp & 0x7ffff;			// mask off sign bit
+            Temperature[0] = float(iTemp / 1000) / 10.0; // issue #49 fix.
+            // After converting the hexadecimal number into decimal the first three digits are the
+            // temperature and the last three digits are the humidity.So "03519e" converts to "217502"
+            // which means 21.7 °C and 50.2 % humidity without any rounding.
+            if (bNegative)						// apply sign bit
+                Temperature[0] = -1.0 * Temperature[0];
+            Humidity = float(iTemp % 1000) / 10.0;
+            Battery = int(data[8]);
+            Averages = 1;
+            time(&Time);
+            TemperatureMin[0] = TemperatureMax[0] = Temperature[0];	//HACK: make sure that these values are set
+            rval = true;
+        }
+        else if ((data_len == 10) && (data[2] == 0x88) && (data[3] == 0xEC))// Govee_H5074_xxxx
+        {
+            if (Model == ThermometerType::Unknown)
+                Model = ThermometerType::H5074;
+            // This data came from https://github.com/neilsheps/GoveeTemperatureAndHumidity
+            // 88EC00 0902 CD15 64 02 (Temp) 41.378°F (Humidity) 55.81% (Battery) 100%
+            // 2 3 4  5 6  7 8  9
+            short iTemp = short(data[6]) << 8 | short(data[5]);
+            int iHumidity = int(data[8]) << 8 | int(data[7]);
+            Temperature[0] = float(iTemp) / 100.0;
+            Humidity = float(iHumidity) / 100.0;
+            Battery = int(data[9]);
+            Averages = 1;
+            time(&Time);
+            TemperatureMin[0] = TemperatureMax[0] = Temperature[0];	//HACK: make sure that these values are set
+            rval = true;
+        }
+        else if ((data_len == 12) && (data[2] == 0x01) && (data[3] == 0x88) && (data[4] == 0xEC)) // Govee_H5179
+        {
+            if (Model == ThermometerType::Unknown)
+                Model = ThermometerType::H5179;
+            // This is from data provided in https://github.com/wcbonner/GoveeBTTempLogger/issues/36
+            // 0188EC00 0101 0A0A B018 64 (Temp) 25.7°C (Humidity) 63.2% (Battery) 100% (GVH5179)
+            // 2 3 4 5  6 7  8 9  1011 12
+            short iTemp = short(data[9]) << 8 | short(data[8]);
+            int iHumidity = int(data[11]) << 8 | int(data[10]);
+            Temperature[0] = float(iTemp) / 100.0;
+            Humidity = float(iHumidity) / 100.0;
+            Battery = int(data[12]);
+            Averages = 1;
+            time(&Time);
+            TemperatureMin[0] = TemperatureMax[0] = Temperature[0];	//HACK: make sure that these values are set
+            rval = true;
+        }
+        else if ((data_len == 9) && (data[2] == 0x01) && (data[3] == 0x00)) // GVH5177_xxxx or GVH5174_xxxx or GVH5100_xxxx
+        {
+            // This is a guess based on the H5075 3 byte encoding
+            // 01000101 029D1B 64 (Temp) 62.8324°F (Humidity) 29.1% (Battery) 100%
+            // 2 3 4 5  6 7 8  9
+            // It appears that the H5174 uses the exact same data format as the H5177, with the difference being the broadcase name starting with GVH5174_
+            int iTemp = int(data[6]) << 16 | int(data[7]) << 8 | int(data[8]);
+            bool bNegative = iTemp & 0x800000;	// check sign bit
+            iTemp = iTemp & 0x7ffff;			// mask off sign bit
+            Temperature[0] = float(iTemp) / 10000.0;
+            Humidity = float(iTemp % 1000) / 10.0;
+            if (bNegative)						// apply sign bit
+                Temperature[0] = -1.0 * Temperature[0];
+            Battery = int(data[9]);
+            Averages = 1;
+            time(&Time);
+            TemperatureMin[0] = TemperatureMax[0] = Temperature[0];	//HACK: make sure that these values are set
+            rval = true;
+        }
+        else if (data_len == 17 && (data[5] == 0x01) && (data[6] == 0x00) && (data[7] == 0x01) && (data[8] == 0x01)) // GVH5183 (UUID) 5183 B5183011
+        {
+            if (Model == ThermometerType::Unknown)
+                Model = ThermometerType::H5183;
+            // Govee Bluetooth Wireless Meat Thermometer, Digital Grill Thermometer with 1 Probe, 230ft Remote Temperature Monitor, Smart Kitchen Cooking Thermometer, Alert Notifications for BBQ, Oven, Smoker, Cakes
+            // https://www.amazon.com/gp/product/B092ZTD96V
+            // The probe measuring range is 0° to 300°C /32° to 572°F.
+            // 5DA1B4 01000101 E4 01 80 0708 13 24 00 00
+            // 2 3 4  5 6 7 8  9  0  1  2 3  4  5  6  7
+            // (Manu) 5DA1B4 01000101 81 0180 07D0 1324 0000 (Temp) 20°C (Temp) 49°C (Battery) 1% (Other: 00)  (Other: 00)  (Other: 00)  (Other: 00)  (Other: 00)  (Other: BF)
+            // the first three bytes are the last three bytes of the bluetooth address.
+            // then next four bytes appear to be a signature for the device type.
+            // Model = ThermometerType::H5181;
+            // Govee Bluetooth Meat Thermometer, 230ft Range Wireless Grill Thermometer Remote Monitor with Temperature Probe Digital Grilling Thermometer with Smart Alerts for Smoker Cooking BBQ Kitchen Oven
+            // https://www.amazon.com/dp/B092ZTJW37/
+            short iTemp = short(data[12]) << 8 | short(data[13]);
+            Temperature[0] = float(iTemp) / 100.0;
+            iTemp = short(data[14]) << 8 | short(data[15]);
+            Temperature[1] = float(iTemp) / 100.0; // This appears to be the alarm temperature.
+            Humidity = 0;
+            Battery = int(data[9] & 0x7F);
+            Averages = 1;
+            time(&Time);
+            for (auto index = 0; index < (sizeof(Temperature) / sizeof(Temperature[0])); index++)
+                TemperatureMin[index] = TemperatureMax[index] = Temperature[index];	//HACK: make sure that these values are set
+            rval = true;
+        }
+        else if (data_len == 20 && (data[5] == 0x01) && (data[6] == 0x00) && (data[7] == 0x01) && (data[8] == 0x01)) // GVH5182 (UUID) 5182 (Manu) 30132701000101E4018606A413F78606A41318
+        {
+            if (Model == ThermometerType::Unknown)
+                Model = ThermometerType::H5182;
+            // Govee Bluetooth Meat Thermometer, 230ft Range Wireless Grill Thermometer Remote Monitor with Temperature Probe Digital Grilling Thermometer with Smart Alerts for Smoker , Cooking, BBQ, Kitchen, Oven
+            // https://www.amazon.com/gp/product/B094N2FX9P
+            // 301327 01000101 64 01 80 05DC 1324 86 06A4 FFFF
+            // 2 3 4  5 6 7 8  9  0  1  2 3  4 5  6  7 8  9 0
+            // (Manu) 301327 01000101 3A 01 86 076C FFFF 86 076C FFFF (Temp) 19°C (Temp) -0.01°C (Temp) 19°C (Temp) -0.01°C (Battery) 58%
+            // If the probe is not connected to the device, the temperature data is set to FFFF.
+            // If the alarm is not set for the probe, the data is set to FFFF.
+            short iTemp = short(data[12]) << 8 | short(data[13]);	// Probe 1 Temperature
+            Temperature[0] = float(iTemp) / 100.0;
+            iTemp = short(data[14]) << 8 | short(data[15]);			// Probe 1 Alarm Temperature
+            Temperature[1] = float(iTemp) / 100.0;
+            iTemp = short(data[17]) << 8 | short(data[18]);			// Probe 2 Temperature
+            Temperature[2] = float(iTemp) / 100.0;
+            iTemp = short(data[19]) << 8 | short(data[20]);			// Probe 2 Alarm Temperature
+            Temperature[3] = float(iTemp) / 100.0;
+            Humidity = 0;
+            Battery = int(data[9]);
+            Averages = 1;
+            time(&Time);
+            for (auto index = 0; index < (sizeof(Temperature) / sizeof(Temperature[0])); index++)
+                TemperatureMin[index] = TemperatureMax[index] = Temperature[index];	//HACK: make sure that these values are set
+            rval = true;
+        }
+    }
+    return(rval);
+}
+*/
 class Property
 {
 public:
