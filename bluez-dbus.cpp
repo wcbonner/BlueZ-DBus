@@ -1296,7 +1296,60 @@ void bluez_dbus_msg_InterfacesAdded(DBusMessage* dbus_msg)
                             std::cout << " (" << TypeToString(dbus_message_Type) << ")";
                         }
                         else if (DBUS_TYPE_ARRAY == dbus_message_Type)
-                            std::cout << "Array TODO: Decode";
+                        {
+                            if (!Key.compare("ManufacturerData"))
+                            {
+                                DBusMessageIter array3_iter;
+                                dbus_message_iter_recurse(&variant_iter, &array3_iter);
+                                do
+                                {
+                                    if (DBUS_TYPE_DICT_ENTRY == dbus_message_iter_get_arg_type(&array3_iter))
+                                    { 
+                                        std::cout << " (" << TypeToString(dbus_message_iter_get_arg_type(&array3_iter)) << "){";
+                                        DBusMessageIter dict1_iter;
+                                        dbus_message_iter_recurse(&array3_iter, &dict1_iter);
+                                        std::cout << " (" << TypeToString(dbus_message_iter_get_arg_type(&dict1_iter)) << ")";
+                                        dbus_message_iter_next(&dict1_iter);
+                                        if (DBUS_TYPE_VARIANT == dbus_message_iter_get_arg_type(&dict1_iter))
+                                        {
+                                            std::cout << " (" << TypeToString(dbus_message_iter_get_arg_type(&dict1_iter)) << ")[";
+                                            DBusMessageIter variant2_iter;
+                                            dbus_message_iter_recurse(&dict1_iter, &variant2_iter);
+                                            if (DBUS_TYPE_ARRAY == dbus_message_iter_get_arg_type(&variant2_iter))
+                                            { 
+                                                std::cout << " (" << TypeToString(dbus_message_iter_get_arg_type(&variant2_iter)) << "){";
+                                                DBusMessageIter array4_iter;
+                                                dbus_message_iter_recurse(&variant2_iter, &array4_iter);
+                                                do
+                                                {
+                                                    if (DBUS_TYPE_VARIANT == dbus_message_iter_get_arg_type(&array4_iter))
+                                                    {
+                                                        std::cout << " (" << TypeToString(dbus_message_iter_get_arg_type(&array4_iter)) << ")[";
+                                                        DBusMessageIter variant3_iter;
+                                                        dbus_message_iter_recurse(&dict1_iter, &variant3_iter);
+                                                        std::cout << " (" << TypeToString(dbus_message_iter_get_arg_type(&variant3_iter)) << ")";
+                                                        std::cout << " ]";
+                                                    }
+                                                    else
+                                                        std::cout << " (" << TypeToString(dbus_message_iter_get_arg_type(&array4_iter)) << ")";
+                                                } while (dbus_message_iter_next(&array4_iter));
+                                                std::cout << " }";
+                                            }
+                                            else
+                                                std::cout << " (" << TypeToString(dbus_message_iter_get_arg_type(&variant2_iter)) << ")";
+                                            std::cout << " ]";
+                                        }
+                                        else
+                                            std::cout << " (" << TypeToString(dbus_message_iter_get_arg_type(&dict1_iter)) << ")";
+                                        std::cout << " }";
+                                    }
+                                    else
+                                        std::cout << " (" << TypeToString(dbus_message_iter_get_arg_type(&array3_iter)) << ")";
+                                } while (dbus_message_iter_next(&array3_iter));
+                            }
+                            else
+                                std::cout << "TODO: Array Decode";
+                        }
                         else
                             std::cout << "Unexpected type in variant (" << TypeToString(dbus_message_Type) << ")";
                         std::cout << std::endl;
@@ -1467,7 +1520,6 @@ int main(int argc, char* argv[])
                                     std::cout << __FILE__ << "(" << __LINE__ << "): " << "  Path: " << dbus_msg_Path << std::endl;
                                     std::cout << __FILE__ << "(" << __LINE__ << "): " << "  Interface: " << dbus_msg_Interface << std::endl;
                                     std::cout << __FILE__ << "(" << __LINE__ << "): " << "  Member: " << dbus_msg_Member << std::endl;
-                                    int indent = 4;
                                     // BLE advertisement messages arrive as InterfacesAdded messages
                                     if (!dbus_msg_Member.compare("InterfacesAdded"))
                                         bluez_dbus_msg_InterfacesAdded(dbus_msg);
