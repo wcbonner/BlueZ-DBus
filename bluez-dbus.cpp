@@ -995,16 +995,18 @@ void bluez_dbus_msg_PropertiesChanged(DBusMessage* dbus_msg)
             std::cout << std::endl;
             indent -= 4;
         } while (dbus_message_iter_next(&array1_iter));
-        //dbus_message_iter_next(&root_iter);
-        //DBusMessageIter array2_iter;
-        //dbus_message_iter_recurse(&root_iter, &array2_iter);
-        //do
-        //{
-        //    DBusBasicValue value;
-        //    dbus_message_iter_get_basic(&array2_iter, &value);
-        //    std::string key(value.str);
-        //    std::cout << std::right << std::setw(indent) << "String: " << key;
-        //} while (dbus_message_iter_next(&array2_iter));
+        dbus_message_iter_next(&root_iter);
+        DBusMessageIter array2_iter;
+        dbus_message_iter_recurse(&root_iter, &array2_iter);
+        do
+        {
+            if (DBUS_TYPE_STRING == dbus_message_iter_get_arg_type(&array2_iter))
+            {
+                DBusBasicValue value;
+                dbus_message_iter_get_basic(&array2_iter, &value);
+                std::cout << __FILE__ << "(" << __LINE__ << "): " << std::right << std::setw(indent) << value.str << std::endl;
+            }
+        } while (dbus_message_iter_next(&array2_iter));
     }
 }
 
