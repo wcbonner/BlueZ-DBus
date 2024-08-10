@@ -10,12 +10,12 @@
 #include <iomanip>
 #include <iostream>
 #include <iterator>
+#include <locale>
 #include <map>
 #include <regex>
 #include <sstream>
 #include <string>
 #include <vector>
-
 // Do this while running ble-dbus to see what else could be picked up from an advertisement message
 // gdbus introspect --system --dest org.bluez --object-path /org/bluez --recurse
 
@@ -1232,7 +1232,7 @@ void bluez_dbus_msg_InterfacesAdded(DBusMessage* dbus_msg)
         DBusBasicValue value;
         dbus_message_iter_get_basic(&root_iter, &value);
         root_object_path = std::string(value.str);
-        std::cout << std::right << std::setw(indent) << "Object Path: " << root_object_path << std::endl;
+        std::cout << __FILE__ << "(" << __LINE__ << "): " << std::right << std::setw(indent) << "Object Path: " << root_object_path << std::endl;
         dbus_message_iter_next(&root_iter);
         DBusMessageIter array1_iter;
         dbus_message_iter_recurse(&root_iter, &array1_iter);
@@ -1244,7 +1244,7 @@ void bluez_dbus_msg_InterfacesAdded(DBusMessage* dbus_msg)
             DBusBasicValue value;
             dbus_message_iter_get_basic(&dict1_iter, &value);
             std::string val(value.str);
-            std::cout << std::right << std::setw(indent) << "String: " << val << std::endl;
+            std::cout << __FILE__ << "(" << __LINE__ << "): " << std::right << std::setw(indent) << "String: " << val << std::endl;
             if (!val.compare("org.bluez.Device1"))
             {
                 dbus_message_iter_next(&dict1_iter);
@@ -1258,7 +1258,7 @@ void bluez_dbus_msg_InterfacesAdded(DBusMessage* dbus_msg)
                     DBusBasicValue value;
                     dbus_message_iter_get_basic(&dict2_iter, &value);
                     std::string Key(value.str);
-                    std::cout << std::right << std::setw(indent) << Key << ": ";
+                    std::cout << __FILE__ << "(" << __LINE__ << "): " << std::right << std::setw(indent) << Key << ": ";
                     dbus_message_iter_next(&dict2_iter);
                     DBusMessageIter variant_iter;
                     dbus_message_iter_recurse(&dict2_iter, &variant_iter);
@@ -1305,35 +1305,54 @@ void bluez_dbus_msg_InterfacesAdded(DBusMessage* dbus_msg)
                                 {
                                     if (DBUS_TYPE_DICT_ENTRY == dbus_message_iter_get_arg_type(&array3_iter))
                                     { 
-                                        std::cout << " (" << TypeToString(dbus_message_iter_get_arg_type(&array3_iter)) << "){";
+                                        std::cout << " (DBUS_TYPE_DICT_ENTRY){";
                                         DBusMessageIter dict1_iter;
                                         dbus_message_iter_recurse(&array3_iter, &dict1_iter);
-                                        std::cout << " (" << TypeToString(dbus_message_iter_get_arg_type(&dict1_iter)) << ")";
+                                        if (DBUS_TYPE_UINT16 == dbus_message_iter_get_arg_type(&dict1_iter))
+                                        {
+                                            DBusBasicValue value;
+                                            dbus_message_iter_get_basic(&dict1_iter, &value);
+                                            std::ios oldState(nullptr);
+                                            oldState.copyfmt(std::cout);
+                                            std::cout << " (UINT16: " << std::setw(4) << std::setfill('0') << std::hex << value.u16 << ")";
+                                            std::cout.copyfmt(oldState);
+                                        }
+                                        else
+                                            std::cout << " (" << TypeToString(dbus_message_iter_get_arg_type(&dict1_iter)) << ")";
                                         dbus_message_iter_next(&dict1_iter);
                                         if (DBUS_TYPE_VARIANT == dbus_message_iter_get_arg_type(&dict1_iter))
                                         {
-                                            std::cout << " (" << TypeToString(dbus_message_iter_get_arg_type(&dict1_iter)) << ")[";
+                                            std::cout << " (DBUS_TYPE_VARIANT)[";
                                             DBusMessageIter variant2_iter;
                                             dbus_message_iter_recurse(&dict1_iter, &variant2_iter);
                                             if (DBUS_TYPE_ARRAY == dbus_message_iter_get_arg_type(&variant2_iter))
                                             { 
-                                                std::cout << " (" << TypeToString(dbus_message_iter_get_arg_type(&variant2_iter)) << "){";
+                                                std::cout << " (DBUS_TYPE_ARRAY){";
                                                 DBusMessageIter array4_iter;
                                                 dbus_message_iter_recurse(&variant2_iter, &array4_iter);
                                                 do
                                                 {
                                                     if (DBUS_TYPE_VARIANT == dbus_message_iter_get_arg_type(&array4_iter))
                                                     {
-                                                        std::cout << " (" << TypeToString(dbus_message_iter_get_arg_type(&array4_iter)) << ")[";
+                                                        std::cout << " (DBUS_TYPE_VARIANT)[";
                                                         DBusMessageIter variant3_iter;
                                                         dbus_message_iter_recurse(&dict1_iter, &variant3_iter);
                                                         std::cout << " (" << TypeToString(dbus_message_iter_get_arg_type(&variant3_iter)) << ")";
                                                         std::cout << " ]";
                                                     }
+                                                    else if (DBUS_TYPE_BYTE == dbus_message_iter_get_arg_type(&array4_iter))
+                                                    {
+                                                        DBusBasicValue value;
+                                                        dbus_message_iter_get_basic(&array4_iter, &value);
+                                                        std::ios oldState(nullptr);
+                                                        oldState.copyfmt(std::cout);
+                                                        std::cout << std::setw(2) << std::setfill('0') << std::hex << int(value.byt);
+                                                        std::cout.copyfmt(oldState);
+                                                    }
                                                     else
                                                         std::cout << " (" << TypeToString(dbus_message_iter_get_arg_type(&array4_iter)) << ")";
                                                 } while (dbus_message_iter_next(&array4_iter));
-                                                std::cout << " }";
+                                                std::cout << "}";
                                             }
                                             else
                                                 std::cout << " (" << TypeToString(dbus_message_iter_get_arg_type(&variant2_iter)) << ")";
@@ -1375,25 +1394,24 @@ void bluez_dbus_msg_PropertiesChanged(DBusMessage* dbus_msg)
         DBusBasicValue value;
         dbus_message_iter_get_basic(&root_iter, &value);
         root_object_path = std::string(value.str);
-        std::cout << std::right << std::setw(indent) << "Object Path: " << root_object_path << std::endl;
+        std::cout << __FILE__ << "(" << __LINE__ << "): " << std::right << std::setw(indent) << "Object Path: " << root_object_path << std::endl;
         dbus_message_iter_next(&root_iter);
         DBusMessageIter array1_iter;
         dbus_message_iter_recurse(&root_iter, &array1_iter);
         do
         {
             DBusMessageIter dict1_iter;
-            dbus_message_iter_recurse(&array1_iter, &dict1_iter);
+            dbus_message_iter_recurse(&array1_iter, &dict1_iter); // The key of the dict
             indent += 4;
             DBusBasicValue value;
             dbus_message_iter_get_basic(&dict1_iter, &value);
-            std::string key(value.str);
-            std::cout << std::right << std::setw(indent) << key << ": ";
+            std::string Key(value.str);
+            std::cout << __FILE__ << "(" << __LINE__ << "): " << std::right << std::setw(indent) << Key << ": ";
             dbus_message_iter_next(&dict1_iter);
             DBusMessageIter variant_iter;
-            dbus_message_iter_recurse(&dict1_iter, &variant_iter);
-            do
+            dbus_message_iter_recurse(&dict1_iter, &variant_iter); // the Variant value of the dict
+            do // process the variant in the dict
             {
-                std::cout << " Value: ";
                 auto dbus_message_Type = dbus_message_iter_get_arg_type(&variant_iter);
                 if (dbus_type_is_basic(dbus_message_Type))
                 {
@@ -1426,7 +1444,79 @@ void bluez_dbus_msg_PropertiesChanged(DBusMessage* dbus_msg)
                     std::cout << " (" << TypeToString(dbus_message_Type) << ")";
                 }
                 else if (DBUS_TYPE_ARRAY == dbus_message_Type)
-                    std::cout << "Array TODO: Decode";
+                {
+                    if (!Key.compare("ManufacturerData"))
+                    {
+                        DBusMessageIter array3_iter;
+                        dbus_message_iter_recurse(&variant_iter, &array3_iter);
+                        do
+                        {
+                            if (DBUS_TYPE_DICT_ENTRY == dbus_message_iter_get_arg_type(&array3_iter))
+                            {
+                                std::cout << " (DBUS_TYPE_DICT_ENTRY){";
+                                DBusMessageIter dict1_iter;
+                                dbus_message_iter_recurse(&array3_iter, &dict1_iter);
+                                if (DBUS_TYPE_UINT16 == dbus_message_iter_get_arg_type(&dict1_iter))
+                                {
+                                    DBusBasicValue value;
+                                    dbus_message_iter_get_basic(&dict1_iter, &value);
+                                    std::ios oldState(nullptr);
+                                    oldState.copyfmt(std::cout);
+                                    std::cout << " (UINT16: " << std::setw(4) << std::setfill('0') << std::hex << value.u16 << ")";
+                                    std::cout.copyfmt(oldState);
+                                }
+                                else
+                                    std::cout << " (" << TypeToString(dbus_message_iter_get_arg_type(&dict1_iter)) << ")";
+                                dbus_message_iter_next(&dict1_iter);
+                                if (DBUS_TYPE_VARIANT == dbus_message_iter_get_arg_type(&dict1_iter))
+                                {
+                                    std::cout << " (DBUS_TYPE_VARIANT)[";
+                                    DBusMessageIter variant2_iter;
+                                    dbus_message_iter_recurse(&dict1_iter, &variant2_iter);
+                                    if (DBUS_TYPE_ARRAY == dbus_message_iter_get_arg_type(&variant2_iter))
+                                    {
+                                        std::cout << " (DBUS_TYPE_ARRAY){";
+                                        DBusMessageIter array4_iter;
+                                        dbus_message_iter_recurse(&variant2_iter, &array4_iter);
+                                        do
+                                        {
+                                            if (DBUS_TYPE_VARIANT == dbus_message_iter_get_arg_type(&array4_iter))
+                                            {
+                                                std::cout << " (DBUS_TYPE_VARIANT)[";
+                                                DBusMessageIter variant3_iter;
+                                                dbus_message_iter_recurse(&dict1_iter, &variant3_iter);
+                                                std::cout << " (" << TypeToString(dbus_message_iter_get_arg_type(&variant3_iter)) << ")";
+                                                std::cout << " ]";
+                                            }
+                                            else if (DBUS_TYPE_BYTE == dbus_message_iter_get_arg_type(&array4_iter))
+                                            {
+                                                DBusBasicValue value;
+                                                dbus_message_iter_get_basic(&array4_iter, &value);
+                                                std::ios oldState(nullptr);
+                                                oldState.copyfmt(std::cout);
+                                                std::cout << std::setw(2) << std::setfill('0') << std::hex << int(value.byt);
+                                                std::cout.copyfmt(oldState);
+                                            }
+                                            else
+                                                std::cout << " (" << TypeToString(dbus_message_iter_get_arg_type(&array4_iter)) << ")";
+                                        } while (dbus_message_iter_next(&array4_iter));
+                                        std::cout << "}";
+                                    }
+                                    else
+                                        std::cout << " (" << TypeToString(dbus_message_iter_get_arg_type(&variant2_iter)) << ")";
+                                    std::cout << " ]";
+                                }
+                                else
+                                    std::cout << " (" << TypeToString(dbus_message_iter_get_arg_type(&dict1_iter)) << ")";
+                                std::cout << " }";
+                            }
+                            else
+                                std::cout << " (" << TypeToString(dbus_message_iter_get_arg_type(&array3_iter)) << ")";
+                        } while (dbus_message_iter_next(&array3_iter));
+                    }
+                    else
+                        std::cout << "TODO: Array Decode";
+                }
                 else
                     std::cout << "Unexpected type in variant (" << TypeToString(dbus_message_Type) << ")";
             } while (dbus_message_iter_next(&variant_iter));
