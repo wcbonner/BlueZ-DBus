@@ -6,7 +6,7 @@ https://dbus.freedesktop.org/doc/api/html/index.html
 
 I started with a code example I found at https://forums.raspberrypi.com/viewtopic.php?t=353889&sid=2b10dcb0eca390f135ee8c64da253a9c and heavily modified to my own style.
 
-# The program has fuffilled it's original purpose.
+# The program has fulfilled it's original purpose.
 1. Connect to DBus
 2. Enumerate Bluetooth Adapters
 3. Power on a Bluetooth Adapter
