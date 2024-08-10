@@ -275,38 +275,28 @@ method call time=1721846945.918393 sender=:1.3349 -> destination=org.bluez seria
    ]
 */
 
-std::string dbus_message_to_string(DBusMessage* message)
-{
-    // This function is currently a waste of space. I thought it was a simple way of converting a message to human readable content, but the example I got it from seems to be a special case
-    // https://github.com/makercrew/dbus-sample?tab=readme-ov-file#my-baby-just-a-wrote-me-a-letter
-    std::string rval;
-    DBusError dbus_error;
-    dbus_error_init(&dbus_error); // Initialize D-Bus error
-    const char* dbus_result(nullptr);
-    // Parse response
-    dbus_message_get_args(message, &dbus_error, DBUS_TYPE_STRING, &dbus_result, DBUS_TYPE_INVALID);
-    if (dbus_result != nullptr)
-        rval = dbus_result;
-    else if (dbus_error_is_set(&dbus_error))
-        rval = dbus_error.message;
-    dbus_error_free(&dbus_error);
-    return(rval);
-}
+//std::string dbus_message_to_string(DBusMessage* message)
+//{
+//    // This function is currently a waste of space. I thought it was a simple way of converting a message to human readable content, but the example I got it from seems to be a special case
+//    // https://github.com/makercrew/dbus-sample?tab=readme-ov-file#my-baby-just-a-wrote-me-a-letter
+//    std::string rval;
+//    DBusError dbus_error;
+//    dbus_error_init(&dbus_error); // Initialize D-Bus error
+//    const char* dbus_result(nullptr);
+//    // Parse response
+//    dbus_message_get_args(message, &dbus_error, DBUS_TYPE_STRING, &dbus_result, DBUS_TYPE_INVALID);
+//    if (dbus_result != nullptr)
+//        rval = dbus_result;
+//    else if (dbus_error_is_set(&dbus_error))
+//        rval = dbus_error.message;
+//    dbus_error_free(&dbus_error);
+//    return(rval);
+//}
 
 void bluez_power_on(DBusConnection* dbus_conn, const char* adapter_path, const bool PowerOn = true)
 {
-    /*
-    // This version does not send the boolean value as a variant, and does not seem to turn on the adapter
-    DBusMessage* dbus_msg = dbus_message_new_method_call("org.bluez", adapter_path, "org.freedesktop.DBus.Properties", "Set");
-    dbus_message_append_args(dbus_msg,
-        DBUS_TYPE_STRING, &adapter,
-        DBUS_TYPE_STRING, &powered,
-        DBUS_TYPE_BOOLEAN, &cpTrue,
-        DBUS_TYPE_INVALID);
-    dbus_connection_send(dbus_conn, dbus_msg, NULL);
-    dbus_message_unref(dbus_msg);
-    */
-    // This version was hacked from looking at https://git.kernel.org/pub/scm/network/connman/connman.git/tree/gdbus/client.c#n667
+
+    // This was hacked from looking at https://git.kernel.org/pub/scm/network/connman/connman.git/tree/gdbus/client.c#n667
     // https://www.mankier.com/5/org.bluez.Adapter#Interface-boolean_Powered_%5Breadwrite%5D
     DBusMessage* dbus_msg = dbus_message_new_method_call("org.bluez", adapter_path, "org.freedesktop.DBus.Properties", "Set"); // https://dbus.freedesktop.org/doc/api/html/group__DBusMessage.html#ga98ddc82450d818138ef326a284201ee0
     if (!dbus_msg)

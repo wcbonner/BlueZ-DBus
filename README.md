@@ -6,6 +6,14 @@ https://dbus.freedesktop.org/doc/api/html/index.html
 
 I started with a code example I found at https://forums.raspberrypi.com/viewtopic.php?t=353889&sid=2b10dcb0eca390f135ee8c64da253a9c and heavily modified to my own style.
 
+# The program has fuffilled it's original purpose.
+1. Connect to DBus
+2. Enumerate Bluetooth Adapters
+3. Power on a Bluetooth Adapter
+4. Enable Scanning for Bluetooth LE devices (In DBus Parlance, Discovery)
+5. Enable Messages from DBus to get the equivelent of Bluetooth Advertising Messages
+6. Decode Bluetooth Messages to be able to recognize temperature data stored in Manufacturer Data
+
 While testing the program I've learned a few interesting things. 
 
 ## Running HCI Bluetooth Programs Are Not apparent
@@ -2866,3 +2874,8 @@ The MGMT Command: Start Service Discovery initiates a sequence of HCI Commands a
           LE Random
         Discovery: Enabled (0x01)
 ```
+
+# These three sites helped me figure out how to send an array of DICT entries
+* https://stackoverflow.com/questions/29973486/d-bus-how-to-create-and-send-a-dict
+* https://git.kernel.org/pub/scm/network/connman/connman.git/tree/gdbus/client.c#n667
+* https://android.googlesource.com/platform/external/wpa_supplicant_8/+/master/wpa_supplicant/dbus/dbus_dict_helpers.c
