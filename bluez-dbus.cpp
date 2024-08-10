@@ -315,6 +315,7 @@ void bluez_power_on(DBusConnection* dbus_conn, const char* adapter_path, const b
         dbus_message_iter_append_basic(&variant, DBUS_TYPE_BOOLEAN, &cpTrue);
         dbus_message_iter_close_container(&iterParameter, &variant); // https://dbus.freedesktop.org/doc/api/html/group__DBusMessage.html#gaf00482f63d4af88b7851621d1f24087a
         dbus_connection_send(dbus_conn, dbus_msg, NULL); // https://dbus.freedesktop.org/doc/api/html/group__DBusConnection.html#gae1cb64f4cf550949b23fd3a756b2f7d0
+        std::cout << __FILE__ << "(" << __LINE__ << "): " << dbus_message_get_path(dbus_msg) << ": " << dbus_message_get_interface(dbus_msg) << ": " << dbus_message_get_member(dbus_msg) << powered << ": " << std::boolalpha << PowerOn << std::endl;
         dbus_message_unref(dbus_msg); // https://dbus.freedesktop.org/doc/api/html/group__DBusMessage.html#gab69441efe683918f6a82469c8763f464
     }
 }
@@ -372,7 +373,7 @@ void bluez_filter_le(DBusConnection* dbus_conn, const char* adapter_path, const 
         DBusError dbus_error;
         dbus_error_init(&dbus_error); // https://dbus.freedesktop.org/doc/api/html/group__DBusErrors.html#ga8937f0b7cdf8554fa6305158ce453fbe
         DBusMessage* dbus_reply = dbus_connection_send_with_reply_and_block(dbus_conn, dbus_msg, DBUS_TIMEOUT_INFINITE, &dbus_error); // https://dbus.freedesktop.org/doc/api/html/group__DBusConnection.html#ga8d6431f17a9e53c9446d87c2ba8409f0
-        std::cout << __FILE__ << "(" << __LINE__ << "): " << dbus_message_get_interface(dbus_msg) << ": " << dbus_message_get_member(dbus_msg) << std::endl;
+        std::cout << __FILE__ << "(" << __LINE__ << "): " << dbus_message_get_path(dbus_msg) << ": " << dbus_message_get_interface(dbus_msg) << ": " << dbus_message_get_member(dbus_msg) << std::endl;
         if (!dbus_reply)
         {
             std::cout << __FILE__ << "(" << __LINE__ << "): Error: " << dbus_message_get_interface(dbus_msg) << ": " << dbus_message_get_member(dbus_msg);
@@ -397,7 +398,7 @@ bool bluez_discovery(DBusConnection* dbus_conn, const char* adapter_path, const 
     DBusError dbus_error;
     dbus_error_init(&dbus_error); // https://dbus.freedesktop.org/doc/api/html/group__DBusErrors.html#ga8937f0b7cdf8554fa6305158ce453fbe
     DBusMessage* dbus_reply = dbus_connection_send_with_reply_and_block(dbus_conn, dbus_msg, DBUS_TIMEOUT_INFINITE, &dbus_error); // https://dbus.freedesktop.org/doc/api/html/group__DBusConnection.html#ga8d6431f17a9e53c9446d87c2ba8409f0
-    std::cout << __FILE__ << "(" << __LINE__ << "): " << dbus_message_get_interface(dbus_msg) << ": " << dbus_message_get_member(dbus_msg) << std::endl;
+    std::cout << __FILE__ << "(" << __LINE__ << "): " << dbus_message_get_path(dbus_msg) << ": " << dbus_message_get_interface(dbus_msg) << ": " << dbus_message_get_member(dbus_msg) << std::endl;
     if (!dbus_reply)
     {
         std::cout << __FILE__ << "(" << __LINE__ << "): Error: " << dbus_message_get_interface(dbus_msg) << ": " << dbus_message_get_member(dbus_msg);
@@ -429,7 +430,7 @@ void bluez_find_adapters(DBusConnection* dbus_conn, std::vector<std::string> &ad
     {
         dbus_error_init(&dbus_error);
         DBusMessage* dbus_reply = dbus_connection_send_with_reply_and_block(dbus_conn, dbus_msg, DBUS_TIMEOUT_USE_DEFAULT, &dbus_error);
-        std::cout << __FILE__ << "(" << __LINE__ << "): " << dbus_message_get_interface(dbus_msg) << ": " << dbus_message_get_member(dbus_msg) << std::endl;
+        std::cout << __FILE__ << "(" << __LINE__ << "): " << dbus_message_get_path(dbus_msg) << ": " << dbus_message_get_interface(dbus_msg) << ": " << dbus_message_get_member(dbus_msg) << std::endl;
         dbus_message_unref(dbus_msg);
         if (!dbus_reply)
         {
@@ -816,6 +817,22 @@ void bluez_dbus_msg_InterfacesAdded(DBusMessage* dbus_msg)
                                         else
                                             std::cout << " (" << TypeToString(dbus_message_iter_get_arg_type(&dict1_iter)) << ")";
                                         std::cout << " }";
+                                    }
+                                    else
+                                        std::cout << " (" << TypeToString(dbus_message_iter_get_arg_type(&array3_iter)) << ")";
+                                } while (dbus_message_iter_next(&array3_iter));
+                            }
+                            else if (!Key.compare("UUIDs"))
+                            {
+                                DBusMessageIter array3_iter;
+                                dbus_message_iter_recurse(&variant_iter, &array3_iter);
+                                do
+                                {
+                                    if (DBUS_TYPE_STRING == dbus_message_iter_get_arg_type(&array3_iter))
+                                    { 
+                                        DBusBasicValue value;
+                                        dbus_message_iter_get_basic(&array3_iter, &value);
+                                        std::cout << " " << value.str;
                                     }
                                     else
                                         std::cout << " (" << TypeToString(dbus_message_iter_get_arg_type(&array3_iter)) << ")";
